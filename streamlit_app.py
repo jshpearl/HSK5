@@ -13,7 +13,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Custom CSS for Pastel, Cute Rounded Cards, Bold Fonts, Mobile Responsiveness
+# Custom CSS for Pastel, Cute Rounded Cards, Bold Fonts, Mobile Responsiveness, and 3D Card Flip
 CUSTOM_CSS = """
 <style>
     /* Google Fonts */
@@ -121,50 +121,106 @@ CUSTOM_CSS = """
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
     }
 
-    /* Flashcard Style */
-    .flashcard-back-box {
-        background: #FFFFFF;
-        border: 3px solid #A29BFE;
+    /* QUIZLET 3D FLASHCARD FLIP STYLING */
+    .flashcard-scene {
+        width: 100%;
+        max-width: 650px;
+        height: 330px;
+        margin: 10px auto 20px auto;
+        perspective: 1000px;
+        cursor: pointer;
+    }
+
+    .flashcard-card {
+        width: 100%;
+        height: 100%;
+        position: relative;
+        transform-style: preserve-3d;
+        transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
+    }
+
+    .flashcard-card.is-flipped {
+        transform: rotateY(180deg);
+    }
+
+    .flashcard-face {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        backface-visibility: hidden;
+        -webkit-backface-visibility: hidden;
         border-radius: 24px;
-        padding: 30px 20px;
-        text-align: center;
-        min-height: 250px;
         display: flex;
         flex-direction: column;
         justify-content: center;
         align-items: center;
-        box-shadow: 0 10px 25px rgba(108, 92, 231, 0.12);
-        margin-bottom: 15px;
+        padding: 24px;
+        box-sizing: border-box;
+        box-shadow: 0 10px 25px rgba(108, 92, 231, 0.15);
+        border: 3px solid #6C5CE7;
     }
-    
-    .flashcard-hanzi {
-        font-size: 3.8rem;
+
+    .flashcard-face-front {
+        background: linear-gradient(135deg, #FFFFFF 0%, #F5EEFF 100%);
+        color: #2D3436;
+    }
+
+    .flashcard-face-back {
+        background: linear-gradient(135deg, #F0E6FF 0%, #FFFFFF 100%);
+        color: #2D3436;
+        transform: rotateY(180deg);
+        border-color: #A29BFE;
+    }
+
+    .flashcard-hanzi-front {
+        font-size: 4.5rem;
         font-weight: 800;
         color: #2D3436;
         letter-spacing: 2px;
         margin-bottom: 8px;
+        font-family: 'Noto Sans SC', 'Nunito', sans-serif;
     }
-    .flashcard-pinyin {
+
+    .flashcard-hanzi-back {
+        font-size: 2.6rem;
+        font-weight: 800;
+        color: #6C5CE7;
+        letter-spacing: 1px;
+        margin-bottom: 4px;
+        font-family: 'Noto Sans SC', 'Nunito', sans-serif;
+    }
+
+    .flashcard-pinyin-back {
         font-size: 1.4rem;
         font-weight: 700;
         color: #FF7675;
         margin-bottom: 6px;
     }
-    .flashcard-meaning {
+
+    .flashcard-meaning-back {
         font-size: 1.3rem;
         font-weight: 800;
         color: #00B894;
         margin-bottom: 10px;
     }
-    .flashcard-example {
+
+    .flashcard-example-back {
         font-size: 1rem;
         font-weight: 600;
         color: #4A5568;
-        background: #F8F9FA;
-        padding: 10px 16px;
-        border-radius: 14px;
+        background: #FFFFFF;
+        padding: 8px 16px;
+        border-radius: 12px;
         border-left: 4px solid #6C5CE7;
-        margin-top: 6px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        max-width: 90%;
+    }
+
+    .flashcard-hint-text {
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: #A0AEC0;
+        margin-top: 10px;
     }
 
     /* Quiz Box Style */
@@ -180,30 +236,10 @@ CUSTOM_CSS = """
         font-size: 1.3rem;
         font-weight: 800;
         color: #2D3436;
-        margin-bottom: 12px;
+        margin-bottom: 14px;
     }
 
-    /* Pastel Option Box styling for Streamlit Radio */
-    div[data-testid="stRadio"] > div {
-        gap: 10px;
-    }
-    div[data-testid="stRadio"] label {
-        background-color: #FAF5FF !important;
-        border: 2px solid #E9D5FF !important;
-        border-radius: 16px !important;
-        padding: 10px 18px !important;
-        font-weight: 700 !important;
-        color: #4C1D95 !important;
-        transition: all 0.2s ease !important;
-        margin-bottom: 4px !important;
-        width: 100% !important;
-    }
-    div[data-testid="stRadio"] label:hover {
-        background-color: #F3E8FF !important;
-        border-color: #C084FC !important;
-    }
-
-    /* Badge & Custom Buttons */
+    /* Badge Tag */
     .badge-tag {
         display: inline-block;
         padding: 4px 14px;
@@ -212,9 +248,10 @@ CUSTOM_CSS = """
         font-weight: 800;
         background-color: #FFEAA7;
         color: #D63031;
-        margin-bottom: 12px;
+        margin-bottom: 10px;
     }
 
+    /* Custom Input & Buttons */
     .stButton>button {
         border-radius: 16px !important;
         font-weight: 700 !important;
@@ -223,16 +260,12 @@ CUSTOM_CSS = """
         transition: all 0.2s ease !important;
     }
 
-    /* Flashcard Large Flip Button Style */
-    .flip-btn-style button {
-        background: linear-gradient(135deg, #6C5CE7 0%, #818CF8 100%) !important;
-        color: #FFFFFF !important;
-        font-size: 2.2rem !important;
-        font-weight: 800 !important;
-        padding: 45px 20px !important;
-        border-radius: 24px !important;
-        box-shadow: 0 10px 20px rgba(108, 92, 231, 0.2) !important;
-        line-height: 1.4 !important;
+    /* Radio Options Pastel Frame Styling */
+    div[data-testid="stRadio"] > div {
+        background-color: #FAFAFA;
+        padding: 12px;
+        border-radius: 16px;
+        border: 2px solid #E8E0D5;
     }
     
     /* Footer Style */
@@ -260,9 +293,9 @@ if 'leaderboard_flip' not in st.session_state:
 
 if 'leaderboard_quiz' not in st.session_state:
     st.session_state.leaderboard_quiz = {
-        "Nguyễn Văn A": 30,
-        "Lê Hoàng C": 20,
-        "Trần Thị B": 10
+        "Nguyễn Văn A": 40,
+        "Lê Hoàng C": 30,
+        "Trần Thị B": 20
     }
 
 if 'user_name' not in st.session_state:
@@ -271,11 +304,27 @@ if 'user_name' not in st.session_state:
 if 'flashcard_idx' not in st.session_state:
     st.session_state.flashcard_idx = 0
 
-if 'show_back' not in st.session_state:
-    st.session_state.show_back = False
-
 if 'sheet_url' not in st.session_state:
     st.session_state.sheet_url = ""
+
+# Helper to Submit to Google Sheet
+def submit_results_to_google_sheet(payload, sheet_url):
+    try:
+        req = urllib.request.Request(
+            sheet_url,
+            data=json.dumps(payload).encode('utf-8'),
+            headers={'Content-Type': 'application/json'},
+            method='POST'
+        )
+        with urllib.request.urlopen(req, timeout=10) as response:
+            res_body = response.read().decode('utf-8')
+            res_json = json.loads(res_body)
+            if res_json.get("status") == "success":
+                return True, "Thành công!"
+            else:
+                return False, f"Lỗi từ server: {res_json}"
+    except Exception as e:
+        return False, f"Lỗi kết nối: {str(e)}"
 
 # ==========================================
 # DATA: VOCABULARY & EXERCISES (LESSON 1)
@@ -322,58 +371,18 @@ VOCAB_LESSON_1 = [
     {"hanzi": "患难与共", "pinyin": "huànnàn-yǔgòng", "type": "thng", "meaning": "Hoạn nạn có nhau", "example": "患难与共夫妻 (Cặp vợ chồng hoạn nạn có nhau)"}
 ]
 
-# Body Parts Data with Vietnamese collocation meanings & 10 unique pastel color themes
+# 10 Body Parts with Unique Pastel Frames & Full Meanings (No Icons)
 BODY_PARTS_PASTEL = [
-    {
-        "hanzi": "脑袋", "pinyin": "nǎodai", "hanviet": "Não đại", "meaning": "Đầu",
-        "collocation": "脑袋晕 (Chóng mặt) / 拍拍脑袋 (Vỗ nhẹ lên đầu)",
-        "bg": "#FFF0F5", "border": "#FFB6C1", "text": "#D6336C"
-    },
-    {
-        "hanzi": "脖子", "pinyin": "bózi", "hanviet": "Bột tử", "meaning": "Cổ",
-        "collocation": "脖子酸 (Mỏi cổ) / 缩缩脖子 (Co cổ lại)",
-        "bg": "#F3E8FF", "border": "#C084FC", "text": "#7E22CE"
-    },
-    {
-        "hanzi": "肩膀", "pinyin": "jiānbǎng", "hanviet": "Kiên bảng", "meaning": "Bờ vai",
-        "collocation": "靠在肩膀上 (Tựa vào bờ vai) / 肩膀宽 (Bờ vai rộng)",
-        "bg": "#E0F2FE", "border": "#38BDF8", "text": "#0369A1"
-    },
-    {
-        "hanzi": "胸", "pinyin": "xiōng", "hanviet": "Hung", "meaning": "Ngực",
-        "collocation": "挺胸 (Ưỡn ngực) / 胸口 (Lồng ngực)",
-        "bg": "#E6F4EA", "border": "#34A853", "text": "#137333"
-    },
-    {
-        "hanzi": "腰", "pinyin": "yāo", "hanviet": "Yêu", "meaning": "Lưng / Thắt lưng",
-        "collocation": "伸伸腰 (Vươn lưng) / 腰酸背痛 (Đau lưng mỏi gối)",
-        "bg": "#FEF9C3", "border": "#FACC15", "text": "#A16207"
-    },
-    {
-        "hanzi": "后背", "pinyin": "hòubèi", "hanviet": "Hậu bối", "meaning": "Tấm lưng",
-        "collocation": "拍拍后背 (Vỗ nhẹ lưng) / 靠着后背 (Tựa vào tấm lưng)",
-        "bg": "#FFEDD5", "border": "#FB923C", "text": "#C2410C"
-    },
-    {
-        "hanzi": "手指", "pinyin": "shǒuzhǐ", "hanviet": "Thủ chỉ", "meaning": "Ngón tay",
-        "collocation": "伸出手指 (Chìa ngón tay ra) / 手指灵巧 (Ngón tay khéo léo)",
-        "bg": "#FFE4E6", "border": "#FB7185", "text": "#BE123C"
-    },
-    {
-        "hanzi": "眉毛", "pinyin": "méimao", "hanviet": "Mi mao", "meaning": "Lông mày",
-        "collocation": "皱眉毛 (Nhíu mày) / 眉毛弯弯 (Lông mày cong cong)",
-        "bg": "#EDE9FE", "border": "#A78BFA", "text": "#6D28D9"
-    },
-    {
-        "hanzi": "嗓子", "pinyin": "sǎngzi", "hanviet": "Tảng tử", "meaning": "Cổ họng / Giọng nói",
-        "collocation": "嗓子疼 (Đau họng) / 嗓子哑了 (Khản tiếng)",
-        "bg": "#CFFAFE", "border": "#22D3EE", "text": "#0E7490"
-    },
-    {
-        "hanzi": "牙齿", "pinyin": "yáchǐ", "hanviet": "Nha xỉ", "meaning": "Răng",
-        "collocation": "刷牙齿 (Đánh răng) / 牙齿整齐 (Răng đều đặn)",
-        "bg": "#FCE7F3", "border": "#F472B6", "text": "#BE185D"
-    }
+    {"hanzi": "脑袋", "pinyin": "nǎodai", "hanviet": "Não đại", "meaning": "Đầu", "bg": "#FFF0F5", "border": "#FFB6C1", "text": "#D63031", "collocation": "脑袋晕 (Chóng mặt) / 拍拍脑袋 (Vỗ nhẹ lên đầu)"},
+    {"hanzi": "脖子", "pinyin": "bózi", "hanviet": "Bột tử", "meaning": "Cổ", "bg": "#F0F8FF", "border": "#87CEFA", "text": "#0984E3", "collocation": "脖子酸 (Mỏi cổ) / 缩缩脖子 (Rụt cổ)"},
+    {"hanzi": "肩膀", "pinyin": "jiānbǎng", "hanviet": "Kiên bảng", "meaning": "Bờ vai", "bg": "#F5F0FF", "border": "#B388FF", "text": "#6C5CE7", "collocation": "靠在肩膀上 (Tựa vào bờ vai) / 肩膀宽 (Vai rộng)"},
+    {"hanzi": "胸", "pinyin": "xiōng", "hanviet": "Hung", "meaning": "Ngực", "bg": "#E6FFFA", "border": "#4FD1C5", "text": "#2C7A7B", "collocation": "挺胸 (Uốn ngực) / 胸口 (Lồng ngực)"},
+    {"hanzi": "腰", "pinyin": "yāo", "hanviet": "Yêu", "meaning": "Thắt lưng / Lưng", "bg": "#FFFBE6", "border": "#F6E05E", "text": "#D69E2E", "collocation": "伸伸腰 (Vươn lưng) / 腰酸背痛 (Đau lưng mỏi gối)"},
+    {"hanzi": "后背", "pinyin": "hòubèi", "hanviet": "Hậu bối", "meaning": "Tấm lưng", "bg": "#F0FFF4", "border": "#68D391", "text": "#276749", "collocation": "拍拍后背 (Vỗ lưng) / 靠着后背 (Tựa tấm lưng)"},
+    {"hanzi": "手指", "pinyin": "shǒuzhǐ", "hanviet": "Thủ chỉ", "meaning": "Ngón tay", "bg": "#FFF5F5", "border": "#FEB2B2", "text": "#C53030", "collocation": "伸出手指 (Chìa ngón tay ra) / 手指灵巧 (Ngón tay khéo léo)"},
+    {"hanzi": "眉毛", "pinyin": "méimao", "hanviet": "Mi mao", "meaning": "Lông mày", "bg": "#FAF5FF", "border": "#D6BCFA", "text": "#6B46C1", "collocation": "皱眉毛 (Nhíu lông mày) / 眉毛弯弯 (Lông mày cong cong)"},
+    {"hanzi": "嗓子", "pinyin": "sǎngzi", "hanviet": "Tảng tử", "meaning": "Cổ họng / Giọng nói", "bg": "#EBF8FF", "border": "#90CDF4", "text": "#2B6CB0", "collocation": "嗓子疼 (Đau cổ họng) / 嗓子哑了 (Khản giọng)"},
+    {"hanzi": "牙齿", "pinyin": "yáchǐ", "hanviet": "Nha xỉ", "meaning": "Răng", "bg": "#F7FAFC", "border": "#CBD5E0", "text": "#4A5568", "collocation": "刷牙齿 (Đánh răng) / 牙齿整齐 (Răng đều đặn)"}
 ]
 
 SENTENCE_MAKING_WORDS = [
@@ -403,14 +412,10 @@ SENTENCE_MAKING_WORDS = [
     }
 ]
 
-# ==========================================
-# GENERATE 100 RANDOM QUESTION BANK (NO ** **)
-# ==========================================
-
+# 100 QUESTION BANK FOR RANDOM QUIZ
 def generate_100_question_bank():
     questions = []
     
-    # 50 Questions Type A: Meaning of Hanzi
     type_a_base = [
         ("细节", "Chi tiết", ["Đài phát thanh", "Hôn nhân", "Bờ vai"]),
         ("电台", "Đài phát thanh", ["Chi tiết", "Ban giám khảo", "Giải thưởng"]),
@@ -468,18 +473,14 @@ def generate_100_question_bank():
         hanzi, correct_m, wrong_list = item[0], item[1], item[2]
         opts = ["Chưa chọn", correct_m] + wrong_list
         random.seed(len(questions) + 42)
-        # shuffle options keep 'Chưa chọn' at index 0
-        rest_opts = opts[1:]
-        random.shuffle(rest_opts)
-        final_opts = ["Chưa chọn"] + rest_opts
+        random.shuffle(opts)
         questions.append({
             "type": "Nghĩa của chữ Hán",
             "prompt": f"Chữ Hán 『 {hanzi} 』 có nghĩa là gì?",
-            "options": final_opts,
+            "options": opts,
             "answer": correct_m
         })
 
-    # 50 Questions Type B: Hanzi from Meaning
     type_b_base = [
         ("Chi tiết", "细节", ["电台", "对比", "评委"]),
         ("Đài phát thanh", "电台", ["细节", "婚姻", "项"]),
@@ -504,7 +505,7 @@ def generate_100_question_bank():
         ("Kêu, gọi, hét", "喊", ["催", "叮", "吵"]),
         ("Duỗi, chìa ra", "伸", ["递", "靠", "轮"]),
         ("Ngón tay", "手指", ["肩膀", "脑袋", "眉毛"]),
-        ("Xiêu vẹo, ngoān ngoèo", "歪歪扭扭", ["相敬如宾", "不耐烦", "患难与共"]),
+        ("Xiêu vẹo, ngoằn ngoèo", "歪歪扭扭", ["相敬如宾", "不耐烦", "患难与共"]),
         ("Đưa, chuyền qua", "递", ["伸", "催", "靠"]),
         ("Đầu", "脑袋", ["肩膀", "脖子", "胸"]),
         ("Quý bà, quý cô", "女士", ["老婆", "评委", "电台"]),
@@ -537,13 +538,11 @@ def generate_100_question_bank():
         meaning, correct_h, wrong_h_list = item[0], item[1], item[2]
         opts = ["Chưa chọn", correct_h] + wrong_h_list
         random.seed(len(questions) + 99)
-        rest_opts = opts[1:]
-        random.shuffle(rest_opts)
-        final_opts = ["Chưa chọn"] + rest_opts
+        random.shuffle(opts)
         questions.append({
             "type": "Chữ Hán của từ",
             "prompt": f"Từ mang nghĩa 『 {meaning} 』 tương ứng với Chữ Hán nào?",
-            "options": final_opts,
+            "options": opts,
             "answer": correct_h
         })
 
@@ -551,33 +550,17 @@ def generate_100_question_bank():
 
 QUESTION_BANK_100 = generate_100_question_bank()
 
-# Function to post test results to Google Sheet Web App
-def submit_results_to_google_sheet(data_dict, url):
-    if not url:
-        return False, "Chưa nhập Link Google Sheet Web App"
-    try:
-        req = urllib.request.Request(
-            url,
-            data=json.dumps(data_dict).encode('utf-8'),
-            headers={'Content-Type': 'application/json'}
-        )
-        with urllib.request.urlopen(req, timeout=5) as response:
-            res_text = response.read().decode('utf-8')
-            return True, "Gửi kết quả thành công!"
-    except Exception as e:
-        return False, f"Lỗi gửi dữ liệu: {str(e)}"
-
 # ==========================================
 # MAIN APP HEADER
 # ==========================================
 st.markdown("""
 <div class="header-card">
     <div class="header-title">🌸 HSK 5 Pre-class Learning Hub</div>
-    <div class="header-subtitle">Khung Tự Học Từ Vựng Trọng Điểm Trước Khi Đến Lớp • 黄宝玉老师</div>
+    <div class="header-subtitle">Khung Tự Học Từ Vựng Trọng Điểm Trước Khi Đến Lớp</div>
 </div>
 """, unsafe_allow_html=True)
 
-# User Identification Bar & Bảng Vàng (Double Leaderboards)
+# User Identification Bar & Dual Leaderboards
 st.markdown("#### 👤 Đăng Nhập Học Viên & 🏆 Bảng Vàng Vinh Danh")
 col_u1, col_u2, col_u3 = st.columns([1.2, 1, 1])
 
@@ -588,7 +571,7 @@ with col_u1:
             ✍️ Nhập Họ & Tên học viên:
         </div>
     """, unsafe_allow_html=True)
-    input_name = st.text_input("Tên học viên:", value=st.session_state.user_name, placeholder="Nhập tên học viên...", label_visibility="collapsed")
+    input_name = st.text_input("Tên học viên:", value=st.session_state.user_name, placeholder="Ví dụ: Nguyễn Văn Ánh...", label_visibility="collapsed")
     if input_name != st.session_state.user_name:
         st.session_state.user_name = input_name.strip()
         if st.session_state.user_name:
@@ -599,59 +582,55 @@ with col_u1:
         st.rerun()
     
     if st.session_state.user_name:
-        st.success(f"👋 Học viên: {st.session_state.user_name}")
+        st.success(f"👋 Học viên: **{st.session_state.user_name}**")
     else:
-        st.warning("⚠️ *Nhập tên để tham gia Lật Thẻ & Luyện Từ.*")
+        st.warning("⚠️ *Vui lòng nhập tên để bắt đầu.*")
     st.markdown("</div>", unsafe_allow_html=True)
 
-# Leaderboard 1: Flashcard Flip Top 3
 with col_u2:
     sorted_flip = sorted(st.session_state.leaderboard_flip.items(), key=lambda x: x[1], reverse=True)[:3]
     medals = ["🥇 Top 1", "🥈 Top 2", "🥉 Top 3"]
     
-    lb1_html = """
+    lb_html_1 = """
     <div class="leaderboard-card">
         <div class="leaderboard-title">🎴 BẢNG VÀNG LẬT THẺ</div>
     """
     for rank, (name, count) in enumerate(sorted_flip):
         m_tag = medals[rank] if rank < 3 else f"#{rank+1}"
-        lb1_html += f"""
+        lb_html_1 += f"""
         <div class="leaderboard-item">
             <span><b>{m_tag}:</b> {name}</span>
             <span style="color:#6C5CE7; font-weight:800;">{count} lần</span>
         </div>
         """
-    lb1_html += "</div>"
-    st.markdown(lb1_html, unsafe_allow_html=True)
+    lb_html_1 += "</div>"
+    st.markdown(lb_html_1, unsafe_allow_html=True)
 
-# Leaderboard 2: Random Quiz Top 3
 with col_u3:
     sorted_quiz = sorted(st.session_state.leaderboard_quiz.items(), key=lambda x: x[1], reverse=True)[:3]
     
-    lb2_html = """
+    lb_html_2 = """
     <div class="leaderboard-card" style="background: linear-gradient(135deg, #E6FFFA 0%, #E2E8F0 100%); border-color:#38B2AC;">
         <div class="leaderboard-title" style="color:#2C7A7B;">🎲 BẢNG VÀNG LUYỆN TỪ</div>
     """
-    for rank, (name, score) in enumerate(sorted_quiz):
+    for rank, (name, count) in enumerate(sorted_quiz):
         m_tag = medals[rank] if rank < 3 else f"#{rank+1}"
-        lb2_html += f"""
+        lb_html_2 += f"""
         <div class="leaderboard-item" style="border-color:#81E6D9;">
             <span><b>{m_tag}:</b> {name}</span>
-            <span style="color:#2C7A7B; font-weight:800;">{score} điểm</span>
+            <span style="color:#2C7A7B; font-weight:800;">{count} điểm</span>
         </div>
         """
-    lb2_html += "</div>"
-    st.markdown(lb2_html, unsafe_allow_html=True)
+    lb_html_2 += "</div>"
+    st.markdown(lb_html_2, unsafe_allow_html=True)
 
 # Lesson Level Tabs
 lesson_tabs = st.tabs(["📘 Bài 1: 爱的细节", "📗 Bài 2: (Sắp ra mắt)", "📙 Bài 3: (Sắp ra mắt)"])
 
 with lesson_tabs[0]:
-    # Inside Lesson 1
     sub_lesson_tabs = st.tabs(["📖 Pre-class (Tự học trước)", "📝 Bài tập (Đang cập nhật)"])
     
     with sub_lesson_tabs[0]:
-        # Pre-class Sub-tabs (Combining Flashcards & Random Quiz in Tab 1)
         pre_class_tabs = st.tabs([
             "🃏 Từ Vựng", 
             "🫀 Từ Bổ Sung (Cơ Thể)", 
@@ -660,14 +639,14 @@ with lesson_tabs[0]:
         ])
         
         # -------------------------------------------------------------------
-        # SUB-TAB 1: TỪ VỰNG (FLASHCARD & CÂU HỎI NGẪU NHIÊN GỘP CHUNG)
+        # SUB-TAB 1: TỪ VỰNG (QUIZLET 3D FLASHCARD & CÂU HỎI NGẪU NHIÊN)
         # -------------------------------------------------------------------
         with pre_class_tabs[0]:
             tv_mode = st.radio("Chọn phần học:", ["1. Flashcard Lật Thẻ", "2. 🎲 Câu Hỏi Ngẫu Nhiên"], horizontal=True)
             st.divider()
 
             if "1. Flashcard" in tv_mode:
-                st.markdown("##### 💡 Hướng dẫn: *Bấm trực tiếp vào khung thẻ bên dưới để Lật/Phủ thẻ!*")
+                st.markdown("##### 💡 Hướng dẫn: *Bấm trực tiếp vào thẻ bên dưới để lật mặt trước / mặt sau (hiệu ứng Quizlet)!*")
                 
                 if not st.session_state.user_name:
                     st.error("🔒 **Yêu cầu bắt buộc:** Vui lòng nhập Tên của bạn ở góc trên trước khi lật thẻ!")
@@ -680,49 +659,50 @@ with lesson_tabs[0]:
                     st.progress(progress_val)
                     st.caption(f"Từ {st.session_state.flashcard_idx + 1} / {total_vocab}")
 
-                    # INTERACTIVE FLIP CARD CONTAINER
-                    if not st.session_state.show_back:
-                        # FRONT
-                        st.markdown("<div class='flip-btn-style'>", unsafe_allow_html=True)
-                        card_btn_label = f"🎴 [{current_vocab['type'].upper()}]\n\n{current_vocab['hanzi']}\n\n👉 (Bấm vào thẻ để lật)"
-                        if st.button(card_btn_label, key="flashcard_btn_front", use_container_width=True):
-                            st.session_state.show_back = True
-                            # Increment Flip Count for User
-                            st.session_state.leaderboard_flip[st.session_state.user_name] = st.session_state.leaderboard_flip.get(st.session_state.user_name, 0) + 1
-                            st.rerun()
-                        st.markdown("</div>", unsafe_allow_html=True)
-                    else:
-                        # BACK
-                        st.markdown(f"""
-                        <div class="flashcard-back-box">
-                            <span class="badge-tag">{current_vocab['type']}</span>
-                            <div class="flashcard-hanzi" style="color: #6C5CE7;">{current_vocab['hanzi']}</div>
-                            <div class="flashcard-pinyin">[{current_vocab['pinyin']}]</div>
-                            <div class="flashcard-meaning">👉 {current_vocab['meaning']}</div>
-                            <div class="flashcard-example">📝 Ví dụ: {current_vocab['example']}</div>
+                    # QUIZLET 3D FLIP CARD HTML
+                    card_html = f"""
+                    <div class="flashcard-scene" onclick="this.querySelector('.flashcard-card').classList.toggle('is-flipped')">
+                        <div class="flashcard-card">
+                            <!-- FRONT SIDE: CHỈ CÓ CHỮ HÁN -->
+                            <div class="flashcard-face flashcard-face-front">
+                                <span class="badge-tag">{current_vocab['type']}</span>
+                                <div class="flashcard-hanzi-front">{current_vocab['hanzi']}</div>
+                                <div class="flashcard-hint-text">🔄 Chạm/Click vào thẻ để lật ra mặt sau</div>
+                            </div>
+                            <!-- BACK SIDE: PHIÊN ÂM + NGHĨA + VÍ DỤ -->
+                            <div class="flashcard-face flashcard-face-back">
+                                <span class="badge-tag">{current_vocab['type']}</span>
+                                <div class="flashcard-hanzi-back">{current_vocab['hanzi']}</div>
+                                <div class="flashcard-pinyin-back">[{current_vocab['pinyin']}]</div>
+                                <div class="flashcard-meaning-back">👉 {current_vocab['meaning']}</div>
+                                <div class="flashcard-example-back">📝 Ví dụ: {current_vocab['example']}</div>
+                                <div class="flashcard-hint-text">↩️ Chạm/Click vào thẻ để lật về mặt trước</div>
+                            </div>
                         </div>
-                        """, unsafe_allow_html=True)
-                        
-                        if st.button("🙈 (Bấm vào đây để phủ lại thẻ)", key="flashcard_btn_back", use_container_width=True):
-                            st.session_state.show_back = False
-                            st.rerun()
+                    </div>
+                    """
+                    st.markdown(card_html, unsafe_allow_html=True)
 
-                    # Navigation Controls
-                    col1, col2, col3 = st.columns([1, 1, 1])
+                    # Navigation Controls & Score Counter
+                    col1, col2, col3, col4 = st.columns([1, 1.2, 1, 1])
                     with col1:
                         if st.button("⬅️ Từ trước", use_container_width=True):
                             st.session_state.flashcard_idx = (st.session_state.flashcard_idx - 1) % total_vocab
-                            st.session_state.show_back = False
+                            st.session_state.leaderboard_flip[st.session_state.user_name] = st.session_state.leaderboard_flip.get(st.session_state.user_name, 0) + 1
                             st.rerun()
                     with col2:
-                        if st.button("Từ sau ➡️", use_container_width=True):
-                            st.session_state.flashcard_idx = (st.session_state.flashcard_idx + 1) % total_vocab
-                            st.session_state.show_back = False
+                        if st.button("🎴 Đã học thẻ (+1 lượt)", type="primary", use_container_width=True):
+                            st.session_state.leaderboard_flip[st.session_state.user_name] = st.session_state.leaderboard_flip.get(st.session_state.user_name, 0) + 1
                             st.rerun()
                     with col3:
+                        if st.button("Từ sau ➡️", use_container_width=True):
+                            st.session_state.flashcard_idx = (st.session_state.flashcard_idx + 1) % total_vocab
+                            st.session_state.leaderboard_flip[st.session_state.user_name] = st.session_state.leaderboard_flip.get(st.session_state.user_name, 0) + 1
+                            st.rerun()
+                    with col4:
                         if st.button("🎲 Ngẫu nhiên", use_container_width=True):
                             st.session_state.flashcard_idx = random.randint(0, total_vocab - 1)
-                            st.session_state.show_back = False
+                            st.session_state.leaderboard_flip[st.session_state.user_name] = st.session_state.leaderboard_flip.get(st.session_state.user_name, 0) + 1
                             st.rerun()
 
             elif "2. 🎲 Câu Hỏi Ngẫu Nhiên" in tv_mode:
@@ -732,7 +712,6 @@ with lesson_tabs[0]:
                 if not st.session_state.user_name:
                     st.error("🔒 **Yêu cầu bắt buộc:** Vui lòng nhập Tên ở phía trên trước khi tham gia Luyện Từ!")
                 else:
-                    # Initialize Random Quiz Session
                     if 'quiz_random_indices' not in st.session_state:
                         st.session_state.quiz_random_indices = random.sample(range(len(QUESTION_BANK_100)), 10)
                         st.session_state.quiz_current_step = 0
@@ -769,7 +748,6 @@ with lesson_tabs[0]:
                                         st.session_state.quiz_current_step += 1
                                     else:
                                         st.session_state.quiz_completed = True
-                                        # Update Quiz Leaderboard
                                         st.session_state.leaderboard_quiz[st.session_state.user_name] = st.session_state.leaderboard_quiz.get(st.session_state.user_name, 0) + 10
                                     st.rerun()
                             else:
@@ -885,7 +863,7 @@ with lesson_tabs[0]:
                     st.divider()
 
         # -------------------------------------------------------------------
-        # SUB-TAB 4: LUYỆN TẬP ĐẶT CÂU (NO TEACHER NAME CLAUSE)
+        # SUB-TAB 4: LUYỆN TẬP ĐẶT CÂU
         # -------------------------------------------------------------------
         with pre_class_tabs[3]:
             st.markdown("### ✍️ Diễn Đàn Đặt Câu Ngữ Cảnh")
