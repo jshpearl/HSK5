@@ -1,7 +1,9 @@
 import streamlit as st
+import streamlit.components.v1 as components
 import random
 import json
 import urllib.request
+import textwrap
 
 # ==========================================
 # PAGE CONFIGURATION & PASTEL CUTE STYLING
@@ -13,8 +15,8 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Custom CSS for Pastel, Cute Rounded Cards, Bold Fonts, Mobile Responsiveness, and 3D Card Flip
-CUSTOM_CSS = """
+# Custom CSS for Pastel, Cute Rounded Cards, Bold Fonts, Mobile Responsiveness
+CUSTOM_CSS = textwrap.dedent("""
 <style>
     /* Google Fonts */
     @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Noto+Sans+SC:wght@400;500;700&display=swap');
@@ -121,106 +123,15 @@ CUSTOM_CSS = """
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
     }
 
-    /* QUIZLET 3D FLASHCARD FLIP STYLING */
-    .flashcard-scene {
-        width: 100%;
-        max-width: 650px;
-        height: 330px;
-        margin: 10px auto 20px auto;
-        perspective: 1000px;
-        cursor: pointer;
-    }
-
-    .flashcard-card {
-        width: 100%;
-        height: 100%;
-        position: relative;
-        transform-style: preserve-3d;
-        transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
-    }
-
-    .flashcard-card.is-flipped {
-        transform: rotateY(180deg);
-    }
-
-    .flashcard-face {
-        position: absolute;
-        width: 100%;
-        height: 100%;
-        backface-visibility: hidden;
-        -webkit-backface-visibility: hidden;
-        border-radius: 24px;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        padding: 24px;
-        box-sizing: border-box;
-        box-shadow: 0 10px 25px rgba(108, 92, 231, 0.15);
-        border: 3px solid #6C5CE7;
-    }
-
-    .flashcard-face-front {
-        background: linear-gradient(135deg, #FFFFFF 0%, #F5EEFF 100%);
-        color: #2D3436;
-    }
-
-    .flashcard-face-back {
-        background: linear-gradient(135deg, #F0E6FF 0%, #FFFFFF 100%);
-        color: #2D3436;
-        transform: rotateY(180deg);
-        border-color: #A29BFE;
-    }
-
-    .flashcard-hanzi-front {
-        font-size: 4.5rem;
-        font-weight: 800;
-        color: #2D3436;
-        letter-spacing: 2px;
-        margin-bottom: 8px;
-        font-family: 'Noto Sans SC', 'Nunito', sans-serif;
-    }
-
-    .flashcard-hanzi-back {
-        font-size: 2.6rem;
-        font-weight: 800;
-        color: #6C5CE7;
-        letter-spacing: 1px;
-        margin-bottom: 4px;
-        font-family: 'Noto Sans SC', 'Nunito', sans-serif;
-    }
-
-    .flashcard-pinyin-back {
-        font-size: 1.4rem;
-        font-weight: 700;
-        color: #FF7675;
-        margin-bottom: 6px;
-    }
-
-    .flashcard-meaning-back {
-        font-size: 1.3rem;
-        font-weight: 800;
-        color: #00B894;
-        margin-bottom: 10px;
-    }
-
-    .flashcard-example-back {
-        font-size: 1rem;
-        font-weight: 600;
-        color: #4A5568;
-        background: #FFFFFF;
-        padding: 8px 16px;
-        border-radius: 12px;
-        border-left: 4px solid #6C5CE7;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-        max-width: 90%;
-    }
-
-    .flashcard-hint-text {
-        font-size: 0.9rem;
-        font-weight: 700;
-        color: #A0AEC0;
-        margin-top: 10px;
+    /* CARD GRID BUTTON STYLING */
+    div[data-testid="stButton"] > button {
+        border-radius: 20px !important;
+        padding: 16px 12px !important;
+        font-size: 1.05rem !important;
+        font-weight: 700 !important;
+        white-space: pre-wrap !important;
+        box-shadow: 0 6px 16px rgba(0,0,0,0.05) !important;
+        transition: all 0.2s ease !important;
     }
 
     /* Quiz Box Style */
@@ -251,15 +162,6 @@ CUSTOM_CSS = """
         margin-bottom: 10px;
     }
 
-    /* Custom Input & Buttons */
-    .stButton>button {
-        border-radius: 16px !important;
-        font-weight: 700 !important;
-        border: none !important;
-        padding: 10px 20px !important;
-        transition: all 0.2s ease !important;
-    }
-
     /* Radio Options Pastel Frame Styling */
     div[data-testid="stRadio"] > div {
         background-color: #FAFAFA;
@@ -278,7 +180,7 @@ CUSTOM_CSS = """
         letter-spacing: 1px;
     }
 </style>
-"""
+""")
 st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
 
 # ==========================================
@@ -303,6 +205,12 @@ if 'user_name' not in st.session_state:
 
 if 'flashcard_idx' not in st.session_state:
     st.session_state.flashcard_idx = 0
+
+if 'flashcard_page' not in st.session_state:
+    st.session_state.flashcard_page = 0
+
+if 'flipped_cards' not in st.session_state:
+    st.session_state.flipped_cards = {}  # Dict mapping card index -> bool
 
 if 'sheet_url' not in st.session_state:
     st.session_state.sheet_url = ""
@@ -371,7 +279,6 @@ VOCAB_LESSON_1 = [
     {"hanzi": "患难与共", "pinyin": "huànnàn-yǔgòng", "type": "thng", "meaning": "Hoạn nạn có nhau", "example": "患难与共夫妻 (Cặp vợ chồng hoạn nạn có nhau)"}
 ]
 
-# 10 Body Parts with Unique Pastel Frames & Full Meanings (No Icons)
 BODY_PARTS_PASTEL = [
     {"hanzi": "脑袋", "pinyin": "nǎodai", "hanviet": "Não đại", "meaning": "Đầu", "bg": "#FFF0F5", "border": "#FFB6C1", "text": "#D63031", "collocation": "脑袋晕 (Chóng mặt) / 拍拍脑袋 (Vỗ nhẹ lên đầu)"},
     {"hanzi": "脖子", "pinyin": "bózi", "hanviet": "Bột tử", "meaning": "Cổ", "bg": "#F0F8FF", "border": "#87CEFA", "text": "#0984E3", "collocation": "脖子酸 (Mỏi cổ) / 缩缩脖子 (Rụt cổ)"},
@@ -412,7 +319,6 @@ SENTENCE_MAKING_WORDS = [
     }
 ]
 
-# 100 QUESTION BANK FOR RANDOM QUIZ
 def generate_100_question_bank():
     questions = []
     
@@ -553,24 +459,19 @@ QUESTION_BANK_100 = generate_100_question_bank()
 # ==========================================
 # MAIN APP HEADER
 # ==========================================
-st.markdown("""
+st.markdown(textwrap.dedent("""
 <div class="header-card">
     <div class="header-title">🌸 HSK 5 Pre-class Learning Hub</div>
     <div class="header-subtitle">Khung Tự Học Từ Vựng Trọng Điểm Trước Khi Đến Lớp</div>
 </div>
-""", unsafe_allow_html=True)
+"""), unsafe_allow_html=True)
 
 # User Identification Bar & Dual Leaderboards
 st.markdown("#### 👤 Đăng Nhập Học Viên & 🏆 Bảng Vàng Vinh Danh")
 col_u1, col_u2, col_u3 = st.columns([1.2, 1, 1])
 
 with col_u1:
-    st.markdown("""
-    <div class="user-box">
-        <div style="font-weight:800; font-size:1rem; color:#6C5CE7; margin-bottom:6px;">
-            ✍️ Nhập Họ & Tên học viên:
-        </div>
-    """, unsafe_allow_html=True)
+    st.write("**✍️ Nhập Họ & Tên học viên:**")
     input_name = st.text_input("Tên học viên:", value=st.session_state.user_name, placeholder="Ví dụ: Nguyễn Văn Ánh...", label_visibility="collapsed")
     if input_name != st.session_state.user_name:
         st.session_state.user_name = input_name.strip()
@@ -585,43 +486,28 @@ with col_u1:
         st.success(f"👋 Học viên: **{st.session_state.user_name}**")
     else:
         st.warning("⚠️ *Vui lòng nhập tên để bắt đầu.*")
-    st.markdown("</div>", unsafe_allow_html=True)
 
 with col_u2:
     sorted_flip = sorted(st.session_state.leaderboard_flip.items(), key=lambda x: x[1], reverse=True)[:3]
     medals = ["🥇 Top 1", "🥈 Top 2", "🥉 Top 3"]
     
-    lb_html_1 = """
-    <div class="leaderboard-card">
-        <div class="leaderboard-title">🎴 BẢNG VÀNG LẬT THẺ</div>
-    """
+    lb_items_1 = ""
     for rank, (name, count) in enumerate(sorted_flip):
         m_tag = medals[rank] if rank < 3 else f"#{rank+1}"
-        lb_html_1 += f"""
-        <div class="leaderboard-item">
-            <span><b>{m_tag}:</b> {name}</span>
-            <span style="color:#6C5CE7; font-weight:800;">{count} lần</span>
-        </div>
-        """
-    lb_html_1 += "</div>"
+        lb_items_1 += f'<div class="leaderboard-item"><span><b>{m_tag}:</b> {name}</span><span style="color:#6C5CE7; font-weight:800;">{count} lần</span></div>'
+    
+    lb_html_1 = f'<div class="leaderboard-card"><div class="leaderboard-title">🎴 BẢNG VÀNG LẬT THẺ</div>{lb_items_1}</div>'
     st.markdown(lb_html_1, unsafe_allow_html=True)
 
 with col_u3:
     sorted_quiz = sorted(st.session_state.leaderboard_quiz.items(), key=lambda x: x[1], reverse=True)[:3]
     
-    lb_html_2 = """
-    <div class="leaderboard-card" style="background: linear-gradient(135deg, #E6FFFA 0%, #E2E8F0 100%); border-color:#38B2AC;">
-        <div class="leaderboard-title" style="color:#2C7A7B;">🎲 BẢNG VÀNG LUYỆN TỪ</div>
-    """
+    lb_items_2 = ""
     for rank, (name, count) in enumerate(sorted_quiz):
         m_tag = medals[rank] if rank < 3 else f"#{rank+1}"
-        lb_html_2 += f"""
-        <div class="leaderboard-item" style="border-color:#81E6D9;">
-            <span><b>{m_tag}:</b> {name}</span>
-            <span style="color:#2C7A7B; font-weight:800;">{count} điểm</span>
-        </div>
-        """
-    lb_html_2 += "</div>"
+        lb_items_2 += f'<div class="leaderboard-item" style="border-color:#81E6D9;"><span><b>{m_tag}:</b> {name}</span><span style="color:#2C7A7B; font-weight:800;">{count} điểm</span></div>'
+    
+    lb_html_2 = f'<div class="leaderboard-card" style="background: linear-gradient(135deg, #E6FFFA 0%, #E2E8F0 100%); border-color:#38B2AC;"><div class="leaderboard-title" style="color:#2C7A7B;">🎲 BẢNG VÀNG LUYỆN TỪ</div>{lb_items_2}</div>'
     st.markdown(lb_html_2, unsafe_allow_html=True)
 
 # Lesson Level Tabs
@@ -639,14 +525,14 @@ with lesson_tabs[0]:
         ])
         
         # -------------------------------------------------------------------
-        # SUB-TAB 1: TỪ VỰNG (QUIZLET 3D FLASHCARD & CÂU HỎI NGẪU NHIÊN)
+        # SUB-TAB 1: TỪ VỰNG (FLASHCARD 3D QUIZLET & CÂU HỎI NGẪU NHIÊN)
         # -------------------------------------------------------------------
         with pre_class_tabs[0]:
-            tv_mode = st.radio("Chọn phần học:", ["1. Flashcard Lật Thẻ", "2. 🎲 Câu Hỏi Ngẫu Nhiên"], horizontal=True)
+            tv_mode = st.radio("Chọn phần học:", ["1. Flashcard Lật Thẻ 3D (Quizlet Style)", "2. Flashcard 6 Thẻ Đồng Thời", "3. 🎲 Câu Hỏi Ngẫu Nhiên"], horizontal=True)
             st.divider()
 
-            if "1. Flashcard" in tv_mode:
-                st.markdown("##### 💡 Hướng dẫn: *Bấm trực tiếp vào thẻ bên dưới để lật mặt trước / mặt sau (hiệu ứng Quizlet)!*")
+            if "1. Flashcard Lật Thẻ 3D" in tv_mode:
+                st.markdown("##### 💡 Hướng dẫn: *Chạm / Click trực tiếp vào thẻ bên dưới để lật mặt trước / mặt sau (hiệu ứng Quizlet 3D)!*")
                 
                 if not st.session_state.user_name:
                     st.error("🔒 **Yêu cầu bắt buộc:** Vui lòng nhập Tên của bạn ở góc trên trước khi lật thẻ!")
@@ -659,31 +545,153 @@ with lesson_tabs[0]:
                     st.progress(progress_val)
                     st.caption(f"Từ {st.session_state.flashcard_idx + 1} / {total_vocab}")
 
-                    # QUIZLET 3D FLIP CARD HTML
-                    card_html = f"""
-                    <div class="flashcard-scene" onclick="this.querySelector('.flashcard-card').classList.toggle('is-flipped')">
+                    # QUIZLET 3D FLASHCARD COMPONENT (100% RELIABLE JS/CSS FLIP)
+                    type_tag = current_vocab['type'].upper()
+                    hanzi = current_vocab['hanzi']
+                    pinyin = current_vocab['pinyin']
+                    meaning = current_vocab['meaning']
+                    example = current_vocab['example']
+
+                    card_code = f"""
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                    <meta charset="utf-8">
+                    <style>
+                    @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@700;800&family=Noto+Sans+SC:wght@700;800&display=swap');
+                    body {{
+                        font-family: 'Nunito', 'Noto Sans SC', sans-serif;
+                        margin: 0;
+                        padding: 5px;
+                        background: transparent;
+                        display: flex;
+                        justify-content: center;
+                        align-items: center;
+                        user-select: none;
+                        -webkit-user-select: none;
+                    }}
+                    .flashcard-scene {{
+                        width: 100%;
+                        max-width: 650px;
+                        height: 310px;
+                        perspective: 1000px;
+                        cursor: pointer;
+                    }}
+                    .flashcard-card {{
+                        width: 100%;
+                        height: 100%;
+                        position: relative;
+                        transform-style: preserve-3d;
+                        transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
+                    }}
+                    .flashcard-scene.is-flipped .flashcard-card {{
+                        transform: rotateY(180deg);
+                    }}
+                    .flashcard-face {{
+                        position: absolute;
+                        width: 100%;
+                        height: 100%;
+                        backface-visibility: hidden;
+                        -webkit-backface-visibility: hidden;
+                        border-radius: 24px;
+                        display: flex;
+                        flex-direction: column;
+                        justify-content: center;
+                        align-items: center;
+                        padding: 20px;
+                        box-sizing: border-box;
+                        box-shadow: 0 10px 25px rgba(108, 92, 231, 0.15);
+                        border: 3px solid #6C5CE7;
+                    }}
+                    .flashcard-front {{
+                        background: linear-gradient(135deg, #FFFFFF 0%, #FFF5F7 100%);
+                        color: #2D3436;
+                    }}
+                    .flashcard-back {{
+                        background: linear-gradient(135deg, #F0E6FF 0%, #E6FFFA 100%);
+                        color: #2D3436;
+                        transform: rotateY(180deg);
+                        border-color: #A29BFE;
+                    }}
+                    .badge-tag {{
+                        display: inline-block;
+                        padding: 4px 14px;
+                        border-radius: 12px;
+                        font-size: 0.88rem;
+                        font-weight: 800;
+                        background-color: #FFEAA7;
+                        color: #D63031;
+                        margin-bottom: 12px;
+                    }}
+                    .hanzi-front {{
+                        font-size: 4.2rem;
+                        font-weight: 800;
+                        color: #2D3436;
+                        letter-spacing: 2px;
+                        margin-bottom: 8px;
+                    }}
+                    .hanzi-back {{
+                        font-size: 2.4rem;
+                        font-weight: 800;
+                        color: #6C5CE7;
+                        margin-bottom: 4px;
+                    }}
+                    .pinyin-back {{
+                        font-size: 1.35rem;
+                        font-weight: 700;
+                        color: #FF7675;
+                        margin-bottom: 6px;
+                    }}
+                    .meaning-back {{
+                        font-size: 1.25rem;
+                        font-weight: 800;
+                        color: #00B894;
+                        margin-bottom: 8px;
+                    }}
+                    .example-back {{
+                        font-size: 0.95rem;
+                        font-weight: 600;
+                        color: #4A5568;
+                        background: #FFFFFF;
+                        padding: 8px 16px;
+                        border-radius: 12px;
+                        border-left: 4px solid #6C5CE7;
+                        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+                        max-width: 90%;
+                        text-align: center;
+                    }}
+                    .hint-text {{
+                        font-size: 0.85rem;
+                        font-weight: 700;
+                        color: #A0AEC0;
+                        margin-top: 10px;
+                    }}
+                    </style>
+                    </head>
+                    <body>
+                    <div class="flashcard-scene" onclick="this.classList.toggle('is-flipped')">
                         <div class="flashcard-card">
-                            <!-- FRONT SIDE: CHỈ CÓ CHỮ HÁN -->
-                            <div class="flashcard-face flashcard-face-front">
-                                <span class="badge-tag">{current_vocab['type']}</span>
-                                <div class="flashcard-hanzi-front">{current_vocab['hanzi']}</div>
-                                <div class="flashcard-hint-text">🔄 Chạm/Click vào thẻ để lật ra mặt sau</div>
+                            <div class="flashcard-face flashcard-front">
+                                <span class="badge-tag">{type_tag}</span>
+                                <div class="hanzi-front">{hanzi}</div>
+                                <div class="hint-text">🔄 Chạm / Click vào thẻ để lật mặt sau</div>
                             </div>
-                            <!-- BACK SIDE: PHIÊN ÂM + NGHĨA + VÍ DỤ -->
-                            <div class="flashcard-face flashcard-face-back">
-                                <span class="badge-tag">{current_vocab['type']}</span>
-                                <div class="flashcard-hanzi-back">{current_vocab['hanzi']}</div>
-                                <div class="flashcard-pinyin-back">[{current_vocab['pinyin']}]</div>
-                                <div class="flashcard-meaning-back">👉 {current_vocab['meaning']}</div>
-                                <div class="flashcard-example-back">📝 Ví dụ: {current_vocab['example']}</div>
-                                <div class="flashcard-hint-text">↩️ Chạm/Click vào thẻ để lật về mặt trước</div>
+                            <div class="flashcard-face flashcard-back">
+                                <span class="badge-tag">{type_tag}</span>
+                                <div class="hanzi-back">{hanzi}</div>
+                                <div class="pinyin-back">[{pinyin}]</div>
+                                <div class="meaning-back">👉 {meaning}</div>
+                                <div class="example-back">📝 Ví dụ: {example}</div>
+                                <div class="hint-text">↩️ Chạm / Click để lật về mặt trước</div>
                             </div>
                         </div>
                     </div>
+                    </body>
+                    </html>
                     """
-                    st.markdown(card_html, unsafe_allow_html=True)
+                    components.html(card_code, height=330)
 
-                    # Navigation Controls & Score Counter
+                    # Controls
                     col1, col2, col3, col4 = st.columns([1, 1.2, 1, 1])
                     with col1:
                         if st.button("⬅️ Từ trước", use_container_width=True):
@@ -691,7 +699,7 @@ with lesson_tabs[0]:
                             st.session_state.leaderboard_flip[st.session_state.user_name] = st.session_state.leaderboard_flip.get(st.session_state.user_name, 0) + 1
                             st.rerun()
                     with col2:
-                        if st.button("🎴 Đã học thẻ (+1 lượt)", type="primary", use_container_width=True):
+                        if st.button("🎴 Đã thuộc thẻ (+1 lượt)", type="primary", use_container_width=True):
                             st.session_state.leaderboard_flip[st.session_state.user_name] = st.session_state.leaderboard_flip.get(st.session_state.user_name, 0) + 1
                             st.rerun()
                     with col3:
@@ -705,7 +713,64 @@ with lesson_tabs[0]:
                             st.session_state.leaderboard_flip[st.session_state.user_name] = st.session_state.leaderboard_flip.get(st.session_state.user_name, 0) + 1
                             st.rerun()
 
-            elif "2. 🎲 Câu Hỏi Ngẫu Nhiên" in tv_mode:
+            elif "2. Flashcard 6 Thẻ" in tv_mode:
+                st.markdown("##### 💡 Hướng dẫn: *Hiển thị 6 thẻ từ vựng cùng lúc. Bấm vào thẻ bất kỳ để lật ra mặt sau / mặt trước!*")
+                
+                if not st.session_state.user_name:
+                    st.error("🔒 **Yêu cầu bắt buộc:** Vui lòng nhập Tên của bạn ở góc trên trước khi lật thẻ!")
+                else:
+                    total_vocab = len(VOCAB_LESSON_1)
+                    page_size = 6
+                    total_pages = (total_vocab + page_size - 1) // page_size
+
+                    page_idx = st.session_state.flashcard_page
+                    start_idx = page_idx * page_size
+                    end_idx = min(start_idx + page_size, total_vocab)
+                    current_batch = VOCAB_LESSON_1[start_idx:end_idx]
+
+                    col_p1, col_p2, col_p3, col_p4 = st.columns([1, 1.5, 1, 1])
+                    with col_p1:
+                        if st.button("⬅️ Trang trước", use_container_width=True):
+                            st.session_state.flashcard_page = (st.session_state.flashcard_page - 1) % total_pages
+                            st.rerun()
+                    with col_p2:
+                        st.write(f"**Trang {page_idx + 1} / {total_pages} (Từ {start_idx + 1} - {end_idx} / {total_vocab})**")
+                    with col_p3:
+                        if st.button("Trang sau ➡️", use_container_width=True):
+                            st.session_state.flashcard_page = (st.session_state.flashcard_page + 1) % total_pages
+                            st.rerun()
+                    with col_p4:
+                        if st.button("🔄 Lật / Phủ cả 6 thẻ", use_container_width=True):
+                            any_unflipped = any(not st.session_state.flipped_cards.get(start_idx + idx, False) for idx in range(len(current_batch)))
+                            for idx in range(len(current_batch)):
+                                global_card_i = start_idx + idx
+                                st.session_state.flipped_cards[global_card_i] = any_unflipped
+                            st.session_state.leaderboard_flip[st.session_state.user_name] = st.session_state.leaderboard_flip.get(st.session_state.user_name, 0) + 6
+                            st.rerun()
+
+                    grid_cols = st.columns(2)
+                    for local_i, vocab_item in enumerate(current_batch):
+                        global_i = start_idx + local_i
+                        is_flipped = st.session_state.flipped_cards.get(global_i, False)
+                        
+                        col = grid_cols[local_i % 2]
+                        with col:
+                            if not is_flipped:
+                                card_btn_label = f"🎴 [{vocab_item['type'].upper()}]\n\n{vocab_item['hanzi']}\n\n👉 (Chạm vào thẻ để lật)"
+                            else:
+                                card_btn_label = f"✨ [{vocab_item['type'].upper()}] {vocab_item['hanzi']}\n\n[{vocab_item['pinyin']}] • {vocab_item['meaning']}\n\n📝 Ví dụ: {vocab_item['example']}\n\n↩️ (Chạm để lật lại mặt trước)"
+                            
+                            if st.button(
+                                card_btn_label,
+                                key=f"grid_card_btn_{global_i}",
+                                use_container_width=True,
+                                type="primary" if is_flipped else "secondary"
+                            ):
+                                st.session_state.flipped_cards[global_i] = not is_flipped
+                                st.session_state.leaderboard_flip[st.session_state.user_name] = st.session_state.leaderboard_flip.get(st.session_state.user_name, 0) + 1
+                                st.rerun()
+
+            elif "3. 🎲 Câu Hỏi Ngẫu Nhiên" in tv_mode:
                 st.markdown("### 🎲 Câu Hỏi Ngẫu Nhiên (Trắc nghiệm HSK 5)")
                 st.info("💡 Kho có 100 câu hỏi ngẫu nhiên. Mỗi lượt hệ thống rút 10 câu. Chọn sai sẽ không thể qua câu tiếp theo cho đến khi chọn đúng!")
 
@@ -779,7 +844,7 @@ with lesson_tabs[0]:
             for idx, item in enumerate(BODY_PARTS_PASTEL):
                 col = cols[idx % 2]
                 with col:
-                    st.markdown(f"""
+                    st.markdown(textwrap.dedent(f"""
                     <div style="background-color:{item['bg']}; border:2px solid {item['border']}; border-radius:20px; padding:16px; margin-bottom:12px; text-align:center; box-shadow:0 4px 12px rgba(0,0,0,0.03);">
                         <div style="font-size:2rem; font-weight:800; color:{item['text']}; margin-bottom:4px;">{item['hanzi']}</div>
                         <div style="color:#FF7675; font-weight:700; font-size:0.9rem;">[{item['pinyin']}] • Hán Việt: {item['hanviet']}</div>
@@ -788,7 +853,7 @@ with lesson_tabs[0]:
                             🔗 <i>{item['collocation']}</i>
                         </div>
                     </div>
-                    """, unsafe_allow_html=True)
+                    """), unsafe_allow_html=True)
 
         # -------------------------------------------------------------------
         # SUB-TAB 3: BÀI TẬP KIỂM TRA (CLOZE TEST & MATCHING TRẮC NGHIỆM)
@@ -914,13 +979,13 @@ with lesson_tabs[0]:
                         st.error(f"❌ {msg}")
 
     with sub_lesson_tabs[1]:
-        st.markdown("""
+        st.markdown(textwrap.dedent("""
         <div style="text-align:center; padding: 40px; background:#FFF; border-radius:20px; border: 2px dashed #CBD5E1;">
             <div style="font-size:3rem;">⏳</div>
             <h3 style="color:#64748B;">Nội dung Bài Tập Trên Lớp & Về Nhà</h3>
             <p style="color:#94A3B8;">Sẽ được mở khóa sau khi hoàn thành buổi học trên lớp cùng giáo viên!</p>
         </div>
-        """, unsafe_allow_html=True)
+        """), unsafe_allow_html=True)
 
 with lesson_tabs[1]:
     st.info("🚧 Bài 2 đang được biên soạn nội dung...")
@@ -931,8 +996,8 @@ with lesson_tabs[2]:
 # ==========================================
 # FOOTER
 # ==========================================
-st.markdown("""
+st.markdown(textwrap.dedent("""
 <div class="footer">
     黄宝玉老师
 </div>
-""", unsafe_allow_html=True)
+"""), unsafe_allow_html=True)
